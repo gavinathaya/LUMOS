@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lumos"
+version = "0.1.0"
+description = "Astronomical CCD data reduction and photometry toolkit."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Gavin A. Sabian", email = "gavinathaya.s@gmail.com" }
+]
+dependencies = [
+  "numpy",
+  "pandas",
+  "astropy",
+  "matplotlib",
+  "phoutils",
+  "scipy"
+]
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lumos*"]

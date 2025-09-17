@@ -1,0 +1,22 @@
+#Ignore macOS metadata
+._*
+
+#Ignore package metadata and venv directories
+*.egg-info/
+venv/
+
+#Bytecode and cache
+__pycache__/
+*.py[cod]
+*.pyc
+
+#IDE/editor stuff
+.vscode/
+*.swp
+.DS_Store
+.idea/
+
+#Ignore Jupyter notebook checkpoints and unrelated files
+.ipynb_checkpoints/
+experiments.ipynb
+main.ipynb
