@@ -3,6 +3,7 @@ from .bias import *
 from .dark import *
 from .flat import *
 from .apply import *
+import pandas as pd
 
 __all__ = [
     "CalibrationFrames",
