@@ -4,6 +4,8 @@ I/O tools (:mod:`lumos.io`)
 Tools for input output functions in LUMOS.
 """
 import numpy as np
+import pandas as pd
+from astropy.io import fits
 import glob, fnmatch
 
 def findfiles(dir: str = "./",
@@ -55,3 +57,48 @@ def findfiles(dir: str = "./",
                 and f not in flat_files]
     return (np.asarray(raw_files), np.asarray(dark_files),
             np.asarray(bias_files), np.asarray(flat_files))
+
+def metadata_gen(raw_files: np.ndarray | list, HDUnum: int = 0) -> pd.DataFrame:
+    """
+    Generates a metadata DataFrame for a list of raw FITS files.
+    Required for lumos CalibrationFrame class.
+    
+    Extracts relevant header information from each FITS file and organizes it into a pandas DataFrame.
+    Adds columns for calibration and cleaning status, initialized as empty or default values.
+
+    Parameters
+    ----------
+    raw_files : array-like, with str dtype.
+        Array of raw FITS file paths.
+    HDUnum : int, optional
+        n-th HDU to read from each FITS file. Default is 0 (primary HDU).
+        1 is first extension HDU, etc.
+
+    Returns
+    -------
+    metadata : pd.DataFrame
+        DataFrame containing metadata for each file, including:
+        - FILENAME: Name of the FITS file.
+        - DATE_OBS: Observation date from FITS header.
+        - EXPTIME: Exposure time from FITS header.
+        - FILTER: Filter used from FITS header.
+        - TELESCOPE: Telescope name from FITS header.
+        - CAL_FILENAME: List for calibration file names (initially empty).
+        - CAL_STATUS: Calibration status (initially 'UNCALIBRATED').
+        - CLN_FILENAME: List for cleaned file names (initially empty).
+    """
+
+    metadata = pd.DataFrame([
+        {
+            'FILENAME': filename,
+            'DATE_OBS': (header := fits.getheader(filename)).get('DATE-OBS'),
+            'EXPTIME': header.get('EXPTIME'),
+            'FILTER': header.get('FILTER'),
+            'TELESCOPE': header.get('TELESCOP'),
+            'CAL_FILENAME': [],             #Initial empty column for calibration filename
+            'CAL_STATUS': 'UNCALIBRATED',   #Initial status
+            'CLN_FILENAME': [],             #Initial empty column for cleaned filename
+        }
+        for filename in raw_files
+    ]).sort_values(by = 'FILENAME')
+    return metadata
