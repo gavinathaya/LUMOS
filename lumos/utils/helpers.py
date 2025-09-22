@@ -27,7 +27,7 @@ def progress_bar(step: int, total_steps: int, *, fill_char: str ='━', width: i
     progress = f"{step+1}/{total_steps} {'\033[92m'}╢{fill_char*((step+1)*width//total_steps):<{width}}╟{'\033[0m'}"
     
     # Pad with spaces to clear leftovers
-    progress = progress.ljust(width + 30)  # 30 is arbitrary, adjust as needed
+    progress = progress.ljust(7 * width // 4)  # 30 is arbitrary, adjust as needed
 
     #Line overwrite logic
     if step + 1 == total_steps:

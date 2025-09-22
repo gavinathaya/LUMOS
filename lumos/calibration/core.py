@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import os
+import os; import sys
 from astropy.io import fits
 import lumos.utils as lumutils
 
@@ -23,7 +23,7 @@ class CalibrationFrames:
             df = biasdata
         
         frames = []
-        print("\nLoading Bias Frames:")
+        print("Loading Bias Frames:")
         for row in df.itertuples():
             bias_now = fits.getdata(row.FILENAME)
             frames.append(bias_now)
@@ -48,7 +48,7 @@ class CalibrationFrames:
         result = {}
         for exptime, group in df.groupby("EXPTIME"):
             frames = []
-            print(f"\nDark Exptime: {exptime}")
+            print(f"Dark Exptime: {exptime}")
             for i, row in enumerate(group.itertuples()):
                 dark_now = fits.getdata(row.FILENAME)
                 frames.append(dark_now)
@@ -73,7 +73,7 @@ class CalibrationFrames:
         result = {}
         for flt, group in df.groupby("FILTER"):
             frames = []
-            print(f"\nFlat Filter: {flt}")
+            print(f"Flat Filter: {flt}")
             for i, row in enumerate(group.itertuples()):
                 flat_now = fits.getdata(row.FILENAME) - (self.bias if self.bias is not None else 0)
                 flat_now /= np.median(flat_now)
@@ -107,7 +107,7 @@ class CalibrationFrames:
     # --- Apply calibration ---
     def apply_array(self, raw_image, exptime, filter_used):
         """Apply bias, dark, flat to a raw image array."""
-        calibrated = raw_image.copy()
+        calibrated = raw_image.copy().astype(np.float64)  #force for float64
 
         #Bias
         if self.bias is None:
@@ -130,7 +130,7 @@ class CalibrationFrames:
 
         return calibrated
 
-    def apply_self(self, metadata_dir, calibrated_dir, subject_name = '', warn=True):
+    def apply_self(self, metadata_dir: str = './', calibrated_dir: str = './calibrated_FITS/', subject_name: str = '', warn=True):
         """
         Apply bias, dark, and flat calibration to files in metadata.
         Updates self.metadata for tracking.
@@ -144,7 +144,9 @@ class CalibrationFrames:
             print(f"Successfully calibrated files will be saved to '{calibrated_dir}'")
         os.makedirs(calibrated_dir, exist_ok=True)
 
-        for row in self.metadata.itertuples():
+        print('Applying Calibration...')
+        
+        for i, row in enumerate(self.metadata.itertuples()):
             raw_data = fits.getdata(row.FILENAME)
             header = fits.getheader(row.FILENAME)
             exptime = row.EXPTIME
@@ -164,6 +166,8 @@ class CalibrationFrames:
                                   header = header)
             hdu.writeto(calibrated_filename, overwrite=True)
             self.metadata.loc[row.Index, ['CAL_FILENAME', 'CAL_STATUS']] = [calibrated_filename, "SUCCESS"]
+            lumutils.progress_bar(i, len(self.metadata))
+
             if warn:
                 print(f"Calibrated {row.FILENAME} -> {calibrated_filename}")
     
