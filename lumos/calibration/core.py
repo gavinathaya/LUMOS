@@ -246,7 +246,7 @@ class CalibrationFrames:
                                          f"Raw vs Calibrated: {os.path.basename(row.FILENAME)}",
                                          "Raw", "Calibrated")
             plot_filename = os.path.join(plot_dir,
-                                         os.path.basename(row.FILENAME).replace('.fits', '_comparison.png'))
+                                         os.path.basename(row.FILENAME).replace('.fit', '_comparison.png'))
             fig.savefig(plot_filename)
             plt.close(fig)
             lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
