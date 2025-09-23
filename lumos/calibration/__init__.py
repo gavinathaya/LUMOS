@@ -1,3 +1,9 @@
+"""
+Calibration Module (:mod:`lumos.calibration`)
+==========================================================
+Subpackage that contains all things calibration and image modification in LUMOS.
+"""
+
 from .core import *
 from .bias import *
 from .dark import *

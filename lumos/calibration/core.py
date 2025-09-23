@@ -1,8 +1,12 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import os; import sys
 from astropy.io import fits
+from astropy.stats import SigmaClip
+from photutils.background import Background2D, MedianBackground
 import lumos.utils as lumutils
+import lumos.visualization as lumvis
 
 class CalibrationFrames:
     def __init__(self,
@@ -130,7 +134,9 @@ class CalibrationFrames:
 
         return calibrated
 
-    def apply_self(self, metadata_dir: str = './', calibrated_dir: str = './calibrated_FITS/', subject_name: str = '', warn=True):
+    def apply_self(self, metadata_dir: str = './',
+                   calibrated_dir: str = './calibrated_FITS/',
+                   subject_name: str = '', warn=True):
         """
         Apply bias, dark, and flat calibration to files in metadata.
         Updates self.metadata for tracking.
@@ -161,7 +167,7 @@ class CalibrationFrames:
                 continue
             
             calibrated_filename = os.path.join(calibrated_dir,
-                                           os.path.basename(row.FILENAME).replace('.fit', '_calibrated.fit'))
+                                           os.path.basename(row.FILENAME).replace('.fit', '_calibrated.fits'))
             hdu = fits.PrimaryHDU(data = calibrated_data,
                                   header = header)
             hdu.writeto(calibrated_filename, overwrite=True)
@@ -175,6 +181,91 @@ class CalibrationFrames:
         if warn:
             print(f"Current metadata saved to {metadata_dir}{subject_name}_metadata.csv")
         
+        return None
+    
+    # --- Background Removal ---
+    def remove_background(self, data: np.ndarray,
+                          sigma: float = 3.0, box_size: int = 50,
+                          filter_size = (3,3)):
+        bkg_estimator = MedianBackground()
+        sigma_clip = SigmaClip(sigma=sigma)
+        bkg = Background2D(data, box_size, filter_size=(filter_size, filter_size),
+                           sigma_clip=sigma_clip, bkg_estimator=bkg_estimator)
+        cln_data = data - bkg.background
+        return cln_data
+    
+    def remove_background_self(self, clean_dir:str = './clean_FITS/',
+                              subject_name: str = '', metadata_dir: str = './',
+                              warn = True, *, sigma: float = 3.0,
+                              box_size: int = 50, filter_size = (3,3)):
+        """
+        """
+        #Suppress warnings for cleaner output
+        if not warn:
+            np.seterr(all='ignore')
+        
+        #Output directory creation,
+        if warn:
+            print(f"Successfully calibrated files will be saved to '{calibrated_dir}'")
+        os.makedirs(clean_dir, exist_ok=True)
+
+        print('Removing Background...')
+        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+            cal_data = fits.getdata(row.CAL_FILENAME)
+            clean_data = self.remove_background(cal_data, sigma=sigma,
+                                             box_size=box_size,
+                                             filter_size=filter_size)
+            header = fits.getheader(row.CAL_FILENAME)
+
+            clean_filename = os.path.join(clean_dir,
+                                           os.path.basename(row.CAL_FILENAME).replace('.fits', '_clean.fits'))
+            hdu = fits.PrimaryHDU(data = clean_data,
+                                  header = header)
+            hdu.writeto(clean_filename, overwrite=True)
+            self.metadata.loc[row.Index, ['CLN_FILENAME']] = [clean_filename]
+            lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+
+            if warn:
+                print(f"Calibrated {row.FILENAME} -> {clean_filename}")
+    
+        self.metadata.to_csv(f'{metadata_dir}{subject_name}_metadata.csv', index=False)
+        if warn:
+            print(f"Current metadata saved to {metadata_dir}{subject_name}_metadata.csv")
+        
+        return None
+
+
+    # --- Plotting ---
+    def plot_calibration(self, plot_dir: str = './cal_plots/'):
+        os.makedirs(plot_dir, exist_ok=True)
+        print(f"Calibration plots will be saved to '{plot_dir}'")
+        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+            raw_data = fits.getdata(row.FILENAME)
+            cal_data = fits.getdata(row.CAL_FILENAME)
+            fig = lumvis.plot_comparison(raw_data, cal_data,
+                                         f"Raw vs Calibrated: {os.path.basename(row.FILENAME)}",
+                                         "Raw", "Calibrated")
+            plot_filename = os.path.join(plot_dir,
+                                         os.path.basename(row.FILENAME).replace('.fits', '_comparison.png'))
+            fig.savefig(plot_filename)
+            plt.close(fig)
+            lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+        return None
+    
+    def plot_background(self, plot_dir: str = './cal_plots/'):
+        os.makedirs(plot_dir, exist_ok=True)
+        print(f"Background plots will be saved to '{plot_dir}'")
+        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+            cal_data = fits.getdata(row.CAL_FILENAME)
+            cln_data = fits.getdata(row.CLN_FILENAME)
+            fig = lumvis.plot_comparison(cal_data, cln_data,
+                                         f"Calibrated vs Clean: {os.path.basename(row.FILENAME)}",
+                                         "Calibrated", "Clean")
+            plot_filename = os.path.join(plot_dir,
+                                         os.path.basename(row.FILENAME).replace('.fits', '_clean.png'))
+            fig.savefig(plot_filename)
+            plt.close(fig)
+            lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
         return None
 
     # --- Friendly representation ---

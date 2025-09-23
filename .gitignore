@@ -20,5 +20,4 @@ __pycache__/
 .ipynb_checkpoints/
 experiments.ipynb
 main.ipynb
-calibrated_FITS/
-*.csv
+results/
