@@ -134,9 +134,9 @@ class CalibrationFrames:
 
         return calibrated
 
-    def apply_self(self, metadata_dir: str = './',
-                   calibrated_dir: str = './calibrated_FITS/',
-                   subject_name: str = '', warn=True):
+    def apply_self(self, calibrated_dir: str = './calibrated_FITS/',
+                   subject_name: str = '',
+                   metadata_dir: str = './', warn=True):
         """
         Apply bias, dark, and flat calibration to files in metadata.
         Updates self.metadata for tracking.
