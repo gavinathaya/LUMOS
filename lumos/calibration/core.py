@@ -189,7 +189,7 @@ class CalibrationFrames:
                           filter_size = (3,3)):
         bkg_estimator = MedianBackground()
         sigma_clip = SigmaClip(sigma=sigma)
-        bkg = Background2D(data, box_size, filter_size=(filter_size, filter_size),
+        bkg = Background2D(data, box_size, filter_size=filter_size,
                            sigma_clip=sigma_clip, bkg_estimator=bkg_estimator)
         cln_data = data - bkg.background
         return cln_data
@@ -262,7 +262,7 @@ class CalibrationFrames:
                                          f"Calibrated vs Clean: {os.path.basename(row.FILENAME)}",
                                          "Calibrated", "Clean")
             plot_filename = os.path.join(plot_dir,
-                                         os.path.basename(row.FILENAME).replace('.fits', '_clean.png'))
+                                         os.path.basename(row.FILENAME).replace('.fit', '_clean.png'))
             fig.savefig(plot_filename)
             plt.close(fig)
             lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
