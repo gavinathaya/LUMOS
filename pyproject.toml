@@ -1,15 +1,30 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "lumos"
 version = "0.1.0"
-description = "Astronomical CCD data reduction and photometry toolkit."
+description = "CCD Image Processing and Photometry Analysis Package"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "BSD 3-Clause"
+licence - files = ["LICENSE"]
 authors = [
   { name = "Gavin", email = "gavinathaya.s@gmail.com" }
+]
+requires-python = ">=3.9"
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Topic :: Scientific/Engineering :: Astrophysics",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = [
+  "astronomy",
+  "astrophysics",
+  "ccd image processing",
+  "photometry",
+  "science",
+  "research",
+  "data analysis"
 ]
 dependencies = [
   "numpy",
@@ -17,9 +32,11 @@ dependencies = [
   "astropy",
   "matplotlib",
   "photutils",
-  "scipy"
 ]
-requires-python = ">=3.9"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project.urls]
 Repository = "https://github.com/gavinathaya/LUMOS"

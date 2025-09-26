@@ -26,6 +26,7 @@ Focused on scientists, astronomers, and astrophysicists alike for the upcoming O
 This package depends on the following open-source libraries:
 
 - NumPy — https://numpy.org/
+- pandas - https://pandas.pydata.org
 - Astropy — https://astropy.org/
 - Photutils - https://photutils.readthedocs.io
 - Matplotlib — https://matplotlib.org/
@@ -41,6 +42,7 @@ Gavin Athaya S. [(@gavinathaya)](https://github.com/gavinathaya)
 
 *LUMOS leverages the following python packages*
 1. [NumPy](https://numpy.org)
+2. [pandas](https://pandas.pydata.org)
 2. [Astropy](https://astropy.org/)
 3. [Photutils](https://photutils.readthedocs.io)
 4. [Matplotlib](https://matplotlib.org)
@@ -48,6 +50,8 @@ Gavin Athaya S. [(@gavinathaya)](https://github.com/gavinathaya)
 ## Bibliography
 
 1. [Harris, C.R., Millman, K.J., van der Walt, S.J. et al. Array programming with NumPy. *Nature* 585, 357–362 (2020). DOI: 10.1038/s41586-020-2649-2.](https://doi.org/10.1038/s41586-020-2649-2)
+
+2. [McKinney, W. (2010). Data structures for statistical computing in Python. scipy, 445(1), 51-56.](https://doi.org/10.25080/Majora-92bf1922-00a)
 
 2. [Price-Whelan, A. M., Lim, P. L., Earl, N., Starkman, N., Bradley, L., Shupe, D. L., ... & Astropy Collaboration. (2022). The Astropy Project: sustaining and growing a community-oriented open-source project and the latest major release (v5. 0) of the core package. The Astrophysical Journal, 935(2), 167.](https://doi.org/10.48550/arXiv.2206.14220)
 
