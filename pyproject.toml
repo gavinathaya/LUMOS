@@ -3,8 +3,7 @@ name = "lumos"
 version = "0.1.0"
 description = "CCD Image Processing and Photometry Analysis Package"
 readme = "README.md"
-license = "BSD 3-Clause"
-licence - files = ["LICENSE"]
+licence = ["LICENSE"]
 authors = [
   { name = "Gavin", email = "gavinathaya.s@gmail.com" }
 ]

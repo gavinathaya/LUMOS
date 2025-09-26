@@ -1,10 +1,9 @@
-# LUMOS
-
-***Luminosity Measurement & Observing System***
+# LUMOS - ***Luminosity Measurement & Observing System***
 
 [![numpy](https://img.shields.io/badge/-NumPy-013243?style=flat&logo=numpy&logoColor=white)](https://numpy.org/)
-
 [![astropy](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
+[![LICENSE](https://img.shields.io/badge/license-BSD_3--Clause-white?style=plastic&labelColor=%23fc0000&color=white
+)](LICENSE)
 
 A python package designed to ease user experience for photometric analysis.
 
