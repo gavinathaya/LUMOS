@@ -4,6 +4,8 @@
 [![astropy](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
 [![LICENSE](https://img.shields.io/badge/license-BSD_3--Clause-white?style=plastic&labelColor=%23fc0000&color=white
 )](LICENSE)
+![Python Support](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fgavinathaya%2FLUMOS%2Frefs%2Fheads%2Fmain%2Fpyproject.toml
+)
 
 A python package designed to ease user experience for photometric analysis.
 
