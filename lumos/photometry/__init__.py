@@ -1,4 +1,5 @@
 from .aperture import *
+from .detect import *
 from .psf import *
 from .background import *
 

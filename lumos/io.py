@@ -3,10 +3,11 @@ I/O tools (:mod:`lumos.io`)
 ==========================================================
 Tools for input output functions in LUMOS.
 """
+import glob, fnmatch
 import numpy as np
 import pandas as pd
 from astropy.io import fits
-import glob, fnmatch
+from astropy.wcs import WCS
 
 def findfiles(dir: str = "./",
              raw_name: str = "*.fits",
@@ -95,6 +96,18 @@ def metadata_gen(raw_files: np.ndarray | list, HDUnum: int = 0) -> pd.DataFrame:
             'EXPTIME': header.get('EXPTIME'),
             'FILTER': header.get('FILTER'),
             'TELESCOPE': header.get('TELESCOP'),
+            
+            #---------WCS Stuffs-------------
+            'CRVAL1': header.get('CRVAL1'),  #RA reference value (deg)
+            'CRVAL2': header.get('CRVAL2'),  #DEC reference value (deg)
+            'CRPIX1': header.get('CRPIX1'),  #Reference pixel X
+            'CRPIX2': header.get('CRPIX2'),  #Reference pixel Y
+            'CDELT1': header.get('CDELT1'),  #Pixel scale (deg/pix)
+            'CDELT2': header.get('CDELT2'),  #Pixel scale (deg/pix)
+            'CTYPE1': header.get('CTYPE1'),  #Projection type (e.g., RA---TAN)
+            'CTYPE2': header.get('CTYPE2'),  #Projection type (e.g., DEC--TAN)
+
+            #---------Calibration Stuffs-------------
             'CAL_FILENAME': [],             #Initial empty column for calibration filename
             'CAL_STATUS': 'UNCALIBRATED',   #Initial status
             'CLN_FILENAME': [],             #Initial empty column for cleaned filename
@@ -102,3 +115,37 @@ def metadata_gen(raw_files: np.ndarray | list, HDUnum: int = 0) -> pd.DataFrame:
         for filename in raw_files
     ]).sort_values(by = 'FILENAME')
     return metadata
+
+def rebuild_wcs(row: pd.Series) -> WCS:
+    """
+    Rebuilds an astropy.wcs.WCS object from a metadata DataFrame row.
+
+    Parameters
+    ----------
+    row : pandas.Series
+        A single row from the metadata DataFrame. Must contain
+        CRVAL1, CRVAL2, CRPIX1, CRPIX2, CDELT1, CDELT2, CTYPE1, and CTYPE2.
+
+    Returns
+    -------
+    wcs : astropy.wcs.WCS
+        Reconstructed WCS object.
+    """
+    hdr = fits.Header()
+
+    # Basic WCS keywords (RA/DEC TAN projection default)
+    hdr['CTYPE1'] = row.get('CTYPE1', 'RA---TAN')
+    hdr['CTYPE2'] = row.get('CTYPE2', 'DEC--TAN')
+    hdr['CRVAL1'] = float(row.get('CRVAL1', 0.0))
+    hdr['CRVAL2'] = float(row.get('CRVAL2', 0.0))
+    hdr['CRPIX1'] = float(row.get('CRPIX1', 0.0))
+    hdr['CRPIX2'] = float(row.get('CRPIX2', 0.0))
+    hdr['CDELT1'] = float(row.get('CDELT1', -1.0/3600))  # default: -1 arcsec/pix
+    hdr['CDELT2'] = float(row.get('CDELT2',  1.0/3600))
+
+    # Optional rotation matrix (CD or PC terms) if stored
+    for key in ['CD1_1', 'CD1_2', 'CD2_1', 'CD2_2']:
+        if key in row and pd.notna(row[key]):
+            hdr[key] = float(row[key])
+
+    return WCS(hdr)

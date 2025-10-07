@@ -1,10 +1,11 @@
 import numpy as np
 from photutils.detection import DAOStarFinder
 from astropy.io import fits
+from astropy.table import QTable
 import matplotlib.pyplot as plt
 from lumos.visualization import plot_ccd
 
-def data_star_identification(image, fwhm=15.0, threshold=5.0):
+def data_star_identification(image, fwhm=15.0, threshold=5.0) -> QTable:
     """
     Detect stars in the image using DAOStarFinder.
 
@@ -60,7 +61,7 @@ def star_identification(path, fwhm=15.0, threshold=5.0):
         return sources[0]
     return sources
 
-def plot_source_single(image, source):
+def plot_source_single(image, source, projection=None):
     """
     Plot the detected stars on the image.
 
@@ -78,7 +79,7 @@ def plot_source_single(image, source):
     fig : matplotlib.Figure.figure
         Figure of detected stars plot.
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(subplot_kw={'projection': projection})
     plot_ccd(image, fig, ax, title = "Detected stars")
     # ax.plot((source['xcentroid']) , (source['ycentroid']),
     #         'or', ms = 5, mfc = 'none', lw = 0.25)

@@ -206,7 +206,7 @@ class CalibrationFrames:
         
         #Output directory creation,
         if warn:
-            print(f"Successfully calibrated files will be saved to '{calibrated_dir}'")
+            print(f"Successfully calibrated files will be saved to '{clean_dir}'")
         os.makedirs(clean_dir, exist_ok=True)
 
         print('Removing Background...')
@@ -236,7 +236,7 @@ class CalibrationFrames:
 
 
     # --- Plotting ---
-    def plot_calibration(self, plot_dir: str = './cal_plots/'):
+    def plot_calibration(self, plot_dir: str = './cal_plots/', origin: str = 'lower'):
         os.makedirs(plot_dir, exist_ok=True)
         print(f"Calibration plots will be saved to '{plot_dir}'")
         for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
@@ -244,7 +244,7 @@ class CalibrationFrames:
             cal_data = fits.getdata(row.CAL_FILENAME)
             fig = lumvis.plot_comparison(raw_data, cal_data,
                                          f"Raw vs Calibrated: {os.path.basename(row.FILENAME)}",
-                                         "Raw", "Calibrated")
+                                         "Raw", "Calibrated", origin=origin)
             plot_filename = os.path.join(plot_dir,
                                          os.path.basename(row.FILENAME).replace('.fit', '_comparison.png'))
             fig.savefig(plot_filename)
@@ -252,7 +252,7 @@ class CalibrationFrames:
             lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
         return None
     
-    def plot_background(self, plot_dir: str = './cal_plots/'):
+    def plot_background(self, plot_dir: str = './cal_plots/', origin: str = 'lower'):
         os.makedirs(plot_dir, exist_ok=True)
         print(f"Background plots will be saved to '{plot_dir}'")
         for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
@@ -260,7 +260,7 @@ class CalibrationFrames:
             cln_data = fits.getdata(row.CLN_FILENAME)
             fig = lumvis.plot_comparison(cal_data, cln_data,
                                          f"Calibrated vs Clean: {os.path.basename(row.FILENAME)}",
-                                         "Calibrated", "Clean")
+                                         "Calibrated", "Clean", origin=origin)
             plot_filename = os.path.join(plot_dir,
                                          os.path.basename(row.FILENAME).replace('.fit', '_clean.png'))
             fig.savefig(plot_filename)

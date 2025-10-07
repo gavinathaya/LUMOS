@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from astropy.visualization import (ImageNormalize, PercentileInterval,
                                    PowerDistStretch)
 
-def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250):
+def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250, origin = "lower"):
     """
     Plot a CCD image with percentile-based clipping + PowerDist stretch.
     
@@ -32,7 +32,7 @@ def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250):
                           interval=PercentileInterval(clip),
                           stretch=PowerDistStretch(level))
     
-    im = ax.imshow(image, cmap="gray", origin="lower", norm=norm)
+    im = ax.imshow(image, cmap="gray", origin=origin, norm=norm)
     ax.set_title(title)
     ax.set_xlabel("X Pixel")
     ax.set_ylabel("Y Pixel")
@@ -40,12 +40,12 @@ def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250):
 
 def plot_comparison(left_image, right_image, main_title = "Comparison Plot",
                     left_title="Left", right_title="Right",
-                    clip=99.5, level=250):
+                    clip=99.5, level=250, origin="lower"):
     """
     """
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    plot_ccd(left_image, fig, ax[0], title=left_title, clip=clip, level=level)
-    plot_ccd(right_image, fig, ax[1], title=right_title, clip=clip, level=level)
+    plot_ccd(left_image, fig, ax[0], title=left_title, clip=clip, level=level, origin=origin)
+    plot_ccd(right_image, fig, ax[1], title=right_title, clip=clip, level=level, origin=origin)
     fig.suptitle(main_title, y = 0.87)
 
     return fig

@@ -2,7 +2,21 @@ from astropy.table import QTable
 from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
+import pandas as pd
 import numpy as np
+
+class PhotometrySession:
+    def __init__(self,
+                 metadata: pd.DataFrame = pd.DataFrame(),
+                 lightcurves = None,
+                 ref_index: pd.DataFrame = pd.DataFrame(),
+                 ref_stars: pd.DataFrame = pd.DataFrame()) -> None:
+        self.metadata = metadata  #Same metadata as in CalibrationFrames class
+        self.lightcurves = lightcurves if lightcurves is not None else {} #Dict of astropy QTables
+        self.ref_index = ref_index  #Dataframe of detected stars id -> reference stars id per image
+        self.ref_stars = ref_stars  #Reference catalog (VizieR, Gaia, or custom CSV) (Index, RA, Dec, WavelengthMag)
+        
+        return None
 
 class PhotometryTEST:
     def __init__(self):
