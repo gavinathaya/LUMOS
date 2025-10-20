@@ -1,9 +1,11 @@
 import numpy as np
+import pandas as pd
 from photutils.detection import DAOStarFinder
 from astropy.io import fits
 from astropy.table import QTable
 import matplotlib.pyplot as plt
 from lumos.visualization import plot_ccd
+from lumos.utils.helpers import progress_bar
 
 def data_star_identification(image, fwhm=15.0, threshold=5.0) -> QTable:
     """
@@ -54,9 +56,10 @@ def star_identification(path, fwhm=15.0, threshold=5.0):
     """
     sources = []
     path_array = np.atleast_1d(path)
-    for filename in path_array:
+    for index, filename in enumerate(path_array):
         image = fits.getdata(filename)
         sources.append(data_star_identification(image, fwhm=fwhm, threshold=threshold))
+        progress_bar(index, len(path_array))
     if len(sources) == 1:
         return sources[0]
     return sources

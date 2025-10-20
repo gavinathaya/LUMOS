@@ -113,7 +113,7 @@ def metadata_gen(raw_files: np.ndarray | list, HDUnum: int = 0) -> pd.DataFrame:
             'CLN_FILENAME': [],             #Initial empty column for cleaned filename
         }
         for filename in raw_files
-    ]).sort_values(by = 'FILENAME')
+    ]).sort_values(by = 'DATE_OBS').reset_index(drop=True)
     return metadata
 
 def rebuild_wcs(row: pd.Series) -> WCS:
@@ -149,3 +149,34 @@ def rebuild_wcs(row: pd.Series) -> WCS:
             hdr[key] = float(row[key])
 
     return WCS(hdr)
+
+def find_WCS_files(metadata: pd.DataFrame) -> pd.DataFrame:
+    """
+    Returns rows from metadata where WCS headers are present and not default/placeholder values.
+
+    Parameters
+    ----------
+    metadata : pd.DataFrame
+        Metadata DataFrame with WCS columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered DataFrame with only files that have proper WCS headers.
+    """
+    #Define default values that indicates missing WCS
+    def is_valid_wcs(row):
+        #Check for nonzero, non-default, non-NaN values
+        try:
+            return (
+                pd.notna(row['CRVAL1']) and pd.notna(row['CRVAL2']) and
+                row['CRVAL1'] != 0.0 and row['CRVAL2'] != 0.0 and
+                pd.notna(row['CRPIX1']) and pd.notna(row['CRPIX2']) and
+                row['CRPIX1'] != 0.0 and row['CRPIX2'] != 0.0 and
+                pd.notna(row['CDELT1']) and pd.notna(row['CDELT2']) and
+                abs(row['CDELT1']) != 1.0/3600 and abs(row['CDELT2']) != 1.0/3600
+            )
+        except KeyError:
+            return False
+    wcs_files = metadata[metadata.apply(is_valid_wcs, axis=1)].reset_index(drop=True)
+    return wcs_files

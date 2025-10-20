@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from astropy.visualization import (ImageNormalize, PercentileInterval,
                                    PowerDistStretch)
 
-def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250, origin = "lower"):
+def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250, origin = "lower", wcs = None):
     """
     Plot a CCD image with percentile-based clipping + PowerDist stretch.
     
@@ -27,6 +27,15 @@ def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250, origin = "lower")
     level : float (optional)
         PowerDist stretch level; follows y = (level^x -1 )/(level - 1).
         level -> 1: linear, level -> inf: exponential, level -> (0,1): logarithmic.
+    origin : str (optional)
+        Origin for imshow ("lower" or "upper").
+    wcs : None or astropy.wcs.WCS (optional)
+        World Coordinate System for axis (if provided, will use WCSAxes).
+        Will override origin to "lower" if WCS is provided.
+    
+    Returns
+    -------
+    None
     """
     norm = ImageNormalize(image,
                           interval=PercentileInterval(clip),

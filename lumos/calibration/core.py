@@ -270,10 +270,13 @@ class CalibrationFrames:
 
     # --- Friendly representation ---
     def __repr__(self):
-        metadata_status = 'present' if not self.metadata.empty else 'missing'
-        return (f"<CalibrationFrames: "
-            f"bias={'yes' if self.bias is not None else 'no'}, "
-            f"darks={list(self.darks.keys())}, "
-            f"flats={list(self.flats.keys())}, "
-            f"metadata={metadata_status}>")
+        lines = [
+            f"<CalibrationFrames at {hex(id(self))}:",
+            f"  Bias frame: {'present' if self.bias is not None else 'missing'}",
+            f"  Darks: {sorted(self.darks.keys()) if self.darks else 'none'}",
+            f"  Flats: {sorted(self.flats.keys()) if self.flats else 'none'}",
+            f"  Metadata: {len(self.metadata)} entries" if not self.metadata.empty else "  Metadata: missing",
+            ">"
+        ]
+        return "\n".join(lines)
 
