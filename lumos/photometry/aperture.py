@@ -7,6 +7,7 @@ from astropy.table import QTable
 from photutils.aperture import CircularAperture, CircularAnnulus, aperture_photometry
 
 def calc_fwhm(image) -> float:
+    return None
 
 def apply_phot_aperture(image, positions, fwhm) -> QTable:
     

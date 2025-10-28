@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import lumos.io as lumio
 import lumos.photometry.detect as detect
+import matplotlib.pyplot as plt
 from lumos.utils.helpers import progress_bar
 from astropy.table import QTable
 import astropy.units as u
@@ -109,8 +110,41 @@ class PhotometrySession:
         self.metadata.to_csv(f'{metadata_dir}{subject_name}_metadata.csv', index=False)
         print(f'Current metadata saved to {metadata_dir}{subject_name}_metadata.csv')
         return None
-    
 
+    def plot_sources(self, plot_dir:str = './cal_plots/', origin: str = "lower") -> None:
+        """
+        Plot detected sources over images and save the plots to plot_dir.
+
+        Parameters
+        ----------
+        plot_dir : str
+            The directory to save the source plot images.
+        origin : str
+            The origin for the plot (default is "lower").
+
+        Returns
+        -------
+        None
+        """
+        print(f"Source plots will be saved to: '{plot_dir}'")
+        Path(plot_dir).mkdir(parents = True, exist_ok=True)
+        print("Plotting sources on images...")
+        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+            hdul = fits.open(row.CLN_FILENAME)  # pyright: ignore[reportCallIssue]
+            data = hdul[0].data  # pyright: ignore[reportAttributeAccessIssue]
+            header = hdul[0].header  # pyright: ignore[reportAttributeAccessIssue]
+            wcs = WCS(header)
+            source_data = QTable.read(row.SOURCE_FILENAME, format='csv')
+            fig = detect.plot_source(data, f"Detected Sources in {Path(row.FILENAME).name}", # pyright: ignore[reportArgumentType]
+                                     "Pixel Coordinates", "RA/Dec (J2000)", wcs=wcs, source=source_data,
+                                     origin=origin)
+            hdul.close()
+            plot_filename = Path(plot_dir).joinpath(Path(row.FILENAME).stem + '_sources.png')
+            fig.savefig(plot_filename)
+            plt.close(fig)
+            progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+        return None
+        
 # class PhotometryTEST:
 #     def __init__(self):
 #         # Image metadata (per frame)
