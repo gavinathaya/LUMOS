@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import astropy.units as u
 from astropy.table import QTable
+from photutils.psf import fit_fwhm
 from photutils.aperture import CircularAperture, CircularAnnulus, aperture_photometry
 
-def calc_fwhm(image) -> float:
-    return None
-
-def apply_phot_aperture(image, positions, fwhm) -> QTable:
-    
-    aperture = CircularAperture(positions, r = fwhm)
+def apply_phot_aperture(image, positions, n_fwhm) -> QTable:
+    fwhm_vals = fit_fwhm(image, xypos=positions)
+    aperture = CircularAperture(positions, r=n_fwhm * fwhm_vals)
+    result = aperture_photometry(image, aperture)
     return result

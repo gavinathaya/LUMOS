@@ -55,42 +55,6 @@ def plot_ccd(image, fig, ax, title="", clip=99.5, level = 250, origin = "lower",
     ax.set(title = title, xlabel = xname, ylabel=yname)
     fig.colorbar(im, ax=ax, orientation="vertical", fraction=0.046, pad=0.04)
 
-# def WCSPlot(image, wcs = None, title="", clip=99.5, level = 250):
-#     """
-#     Plot a CCD image with WCS, percentile-based clipping + PowerDist stretch.
-    
-#     Parameters
-#     ----------
-#     image : ndarray
-#         The CCD image array
-#     wcs : astropy.wcs.WCS
-#         World Coordinate System for axis
-#     title : str (optional)
-#         Title for the subplot
-#     clip : float (optional)
-#         Percentile for clipping (e.g., 99.5 keeps middle 99.5% of values)
-#     level : float (optional)
-#         PowerDist stretch level; follows y = (level^x -1 )/(level - 1).
-#         level -> 1: linear, level -> inf: exponential, level -> (0,1): logarithmic.
-#     origin : str (optional)
-#         Origin for imshow ("lower" or "upper").
-    
-#     Returns
-#     -------
-#     None
-#     """
-#     norm = ImageNormalize(image,
-#                           interval=PercentileInterval(clip),
-#                           stretch=PowerDistStretch(level))
-#     if wcs is None:
-#         fig, ax = plt.subplots(figsize=(8, 6))
-#         im = ax.imshow(image, cmap="gray", norm=norm) # pyright: ignore[reportArgumentType]
-#     else:
-#         fig, ax = plt.subplots(subplot_kw={'projection': wcs}, figsize=(8, 6))
-#     im = ax.imshow(image, cmap="gray", norm=norm, wcs=wcs) # pyright: ignore[reportArgumentType]
-#     ax.set(title = title, xlabel ="RA", ylabel="Dec")
-#     fig.colorbar(im, ax=ax, orientation="vertical", fraction=0.046, pad=0.04)
-
 def plot_comparison(left_image, right_image, main_title = "Comparison Plot",
                     left_title="Left", right_title="Right",
                     left_wcs = None, right_wcs = None,
