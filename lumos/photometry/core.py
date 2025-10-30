@@ -24,6 +24,23 @@ class PhotometrySession:
         self.ref_image = ref_image  #Reference image filename
         self.wcs_files = lumio.find_WCS_files(self.metadata)["CLN_FILENAME"]
 
+    def add_lightcurves(self, object_name: str,
+                        object_coordinates: SkyCoord) -> None:
+        """
+        Add light curves for a specific astronomical object.
+
+        Parameters
+        ----------
+        object_name : str
+            The name of the astronomical object.
+        object_coordinates : SkyCoord
+            The coordinates of the astronomical object.
+        """
+        self.lightcurves[object_name] = {
+            "coordinates": object_coordinates,
+            "lightcurve": QTable()
+        }
+
     def add_wcs(self) -> None:
         """
         Approximately add WCS to images based on reference image
