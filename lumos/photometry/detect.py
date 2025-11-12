@@ -205,8 +205,8 @@ def plot_source(image, main_title = "Detected Sources",
         raise ValueError("WCS must be provided for plotting in world coordinates.") 
     fig= plt.figure(figsize=(12, 6))
     ax: list[Axes] = []
-    ax[0] = fig.add_subplot(1,2,1)
-    ax[1] = fig.add_subplot(1,2,2, projection = wcs)
+    ax.append(fig.add_subplot(1,2,1))
+    ax.append(fig.add_subplot(1,2,2, projection = wcs))
 
     plot_source_single(image, fig, ax[0],
                        source=source, wcs = wcs,

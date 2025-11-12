@@ -189,7 +189,7 @@ class PhotometrySession:
                                      "Pixel Coordinates", "RA/Dec (J2000)", wcs=wcs, source=source_data,
                                      origin=origin)
             hdul.close()
-            plot_filename = Path(plot_dir).joinpath(Path(row.FILENAME).stem + '_sources.png')
+            plot_filename = Path(plot_dir).joinpath(Path(row.FILENAME).stem + '_sources.png') # pyright: ignore[reportArgumentType]
             fig.savefig(plot_filename)
             plt.close(fig)
             progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))

@@ -93,7 +93,7 @@ def plot_comparison(left_image, right_image, main_title = "Comparison Plot",
     fig= plt.figure(figsize=(12, 6))
     ax: list[Axes] = []
     for i, wcs_stat in enumerate([left_wcs, right_wcs]):
-        ax[i] = fig.add_subplot(1,2,i+1, projection = wcs_stat)
+        ax.append(fig.add_subplot(1,2,i+1, projection = wcs_stat))
 
     plot_ccd(left_image, fig, ax[0], wcs = left_wcs, title=left_title, clip=clip, level=level, origin=origin)
     plot_ccd(right_image, fig, ax[1], wcs = right_wcs, title=right_title, clip=clip, level=level, origin=origin)
