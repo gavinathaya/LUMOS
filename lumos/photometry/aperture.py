@@ -7,9 +7,8 @@ from astropy.table import QTable
 from photutils.psf import fit_fwhm
 from photutils.aperture import CircularAperture, CircularAnnulus, aperture_photometry
 
-def apply_phot_aperture(image, positions, n_fwhm= 3, fit_shape = 15) -> QTable:
+def apply_phot_aperture(image, positions, n_fwhm: float= 3.0, fit_shape: int = 15) -> QTable:
     fwhm_vals = fit_fwhm(image, xypos=positions, fit_shape=fit_shape)
-    print(fwhm_vals.shape)
     aperture = CircularAperture(positions, r=n_fwhm * np.median(fwhm_vals))
     result = aperture_photometry(image, aperture)
     return result

@@ -1,16 +1,23 @@
+import warnings
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import lumos.io as lumio
 import lumos.photometry.detect as detect
+import lumos.photometry.aperture as aperture
 import matplotlib.pyplot as plt
 from lumos.utils.helpers import progress_bar
 from astropy.table import QTable
 import astropy.units as u
 import astropy.io.fits as fits
 from astropy.coordinates import SkyCoord, match_coordinates_sky
-from astropy.wcs import WCS
-from astropy.wcs.utils import fit_wcs_from_points
+from astropy.wcs import WCS, FITSFixedWarning
+from astropy.wcs.utils import fit_wcs_from_points, pixel_to_skycoord
+
+class WCSDegenerateWarning(RuntimeWarning):
+    pass
+warnings.simplefilter("once", WCSDegenerateWarning)
+warnings.simplefilter("ignore", FITSFixedWarning)
 
 class PhotometrySession:
     def __init__(self,
@@ -110,25 +117,28 @@ class PhotometrySession:
         -------
         None
         """
+        #Only process successfully calibrated files
+        success_meta = self.metadata.query('CAL_STATUS == "SUCCESS"')
+        
         print(f"Source CSV files will be saved to: '{source_dir}'")
         Path(source_dir).mkdir(parents = True, exist_ok=True)
         print("Detecting sources in images...")
-        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
-            sources = detect.data_star_identification(fits.getdata(row.CLN_FILENAME),
+        for i, row in enumerate(success_meta.itertuples()):
+            source = detect.data_star_identification(fits.getdata(row.CLN_FILENAME),
                                                       fwhm=fwhm,
                                                       threshold=threshold)
             basename = Path(row.FILENAME).name # pyright: ignore[reportArgumentType]
             source_filename = Path(source_dir).joinpath(basename)
             source_filename = source_filename.with_suffix('.csv')
-            sources.write(source_filename, format='csv', overwrite=True)
+            source.write(source_filename, format='csv', overwrite=True)
             self.metadata.loc[row.Index, ['SOURCE_FILENAME']] = [str(source_filename)]
-            progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+            progress_bar(i, len(success_meta))
         
         self.metadata.to_csv(f'{metadata_dir}{subject_name}_metadata.csv', index=False)
         print(f'Current metadata saved to {metadata_dir}{subject_name}_metadata.csv')
         return None
 
-    def plot_sources(self, plot_dir:str = './cal_plots/', origin: str = "lower") -> None:
+    def plot_sources(self, plot_dir:str = './source_plots/', origin: str = "lower") -> None:
         """
         Plot detected sources for all exposures marked as successfully calibrated.
 
@@ -176,21 +186,95 @@ class PhotometrySession:
         - The caller should ensure that self.metadata and the referenced filenames
           (e.g. row.CLN_FILENAME, row.SOURCE_FILENAME, row.FILENAME) are valid.
         """
+        #Only process successfully calibrated files
+        success_meta = self.metadata.query('CAL_STATUS == "SUCCESS"')
+        
         print(f"Source plots will be saved to: '{plot_dir}'")
         Path(plot_dir).mkdir(parents = True, exist_ok=True)
         print("Plotting sources on images...")
-        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+        for i, row in enumerate(success_meta.itertuples()):
             hdul = fits.open(row.CLN_FILENAME)  # pyright: ignore[reportCallIssue]
             data = hdul[0].data  # pyright: ignore[reportAttributeAccessIssue]
             header = hdul[0].header  # pyright: ignore[reportAttributeAccessIssue]
             wcs = WCS(header)
+            if lumio.is_valid_wcs(wcs) is False:
+                warnings.warn(f"WCS not valid in file {row.CLN_FILENAME}, skipping plot.", WCSDegenerateWarning)
+                hdul.close()
+                continue
+
             source_data = QTable.read(row.SOURCE_FILENAME, format='csv')
-            fig = detect.plot_source(data, f"Detected Sources in {Path(row.FILENAME).name}", # pyright: ignore[reportArgumentType]
+            fig = detect.plot_source(data, f"Detected sources in {Path(row.FILENAME).name}", # pyright: ignore[reportArgumentType]
                                      "Pixel Coordinates", "RA/Dec (J2000)", wcs=wcs, source=source_data,
                                      origin=origin)
             hdul.close()
             plot_filename = Path(plot_dir).joinpath(Path(row.FILENAME).stem + '_sources.png') # pyright: ignore[reportArgumentType]
             fig.savefig(plot_filename)
             plt.close(fig)
-            progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+            progress_bar(i, len(success_meta))
         return None
+
+    def apply_aperture_photometry(self, n_fwhm: float = 3.0, 
+                                  fit_shape: int = 15, phot_dir: str = './phot_CSV/',
+                                  subject_name: str = '', metadata_dir: str = './') -> None:
+            """
+            Detect light sources in metadata clean images and store the results
+            as csv files in source_dir.
+
+            Parameters
+            ----------
+            fwhm : float
+                The full width at half maximum for the Gaussian kernel.
+            threshold : float
+                The absolute image value above which to select sources.
+            source_dir : str
+                The directory to save the source CSV files.
+            subject_name : str
+                The subject name to use in the source CSV filenames.
+            metadata_dir : str
+                The directory where the metadata CSV file will be saved.
+            
+            Returns
+            -------
+            None
+            """
+            #Only process successfully calibrated files
+            success_meta = self.metadata.query('CAL_STATUS == "SUCCESS"')
+
+            print(f"Photometry CSV files will be saved to: '{phot_dir}'")
+            Path(phot_dir).mkdir(parents = True, exist_ok=True)
+            print("Applying aperture photometry in images...")
+            for i, row in enumerate(success_meta.itertuples()):
+                hdul = fits.open(row.CLN_FILENAME)  # pyright: ignore[reportCallIssue]
+                image = hdul[0].data  # pyright: ignore[reportAttributeAccessIssue]
+                header = hdul[0].header  # pyright: ignore[reportAttributeAccessIssue]
+                wcs = WCS(header)
+                if lumio.is_valid_wcs(wcs) is False:
+                    warnings.warn(f"WCS not valid in file {row.CLN_FILENAME}, skipping plot.", WCSDegenerateWarning)
+                    hdul.close()
+                    continue
+
+                source = QTable.read(row.SOURCE_FILENAME, format='csv')
+
+                coords = pixel_to_skycoord(source['xcentroid'].data, source['ycentroid'].data, wcs)
+                xypos = np.column_stack((source['xcentroid'].data, source['ycentroid'].data))
+                phot_table = aperture.apply_phot_aperture(image, xypos, n_fwhm=n_fwhm, fit_shape=fit_shape)
+                phot_table.add_columns([coords.ra, coords.dec, coords], names = ['ra', 'dec', 'coords'])
+
+                catalogue = self.ref_stars.dropna()
+                idx, d2d, d3d = match_coordinates_sky(phot_table['coords'], (SkyCoord(catalogue['ra'], catalogue['dec'], frame = 'icrs', unit='deg')))
+                tol = d2d < 10 * u.arcsec # pyright: ignore[reportAttributeAccessIssue]
+                matched_catalogue = catalogue.iloc[idx[tol]]
+                matched_table = phot_table[tol]
+                mag = aperture.calibrate_mag(matched_table['aperture_sum'], matched_catalogue[(f'mag_{row.FILTER}').lower()], phot_table['aperture_sum'])
+
+                basename = Path(row.FILENAME).name # pyright: ignore[reportArgumentType]
+                phot_table_filename = Path(phot_dir).joinpath(basename)
+                phot_table_filename = phot_table_filename.with_suffix('.csv')
+                hdul.close()
+                phot_table.write(phot_table_filename, format='csv', overwrite=True)
+                self.metadata.loc[row.Index, ['PHOT_FILENAME']] = [str(phot_table_filename)]
+                progress_bar(i, len(success_meta))
+            
+            self.metadata.to_csv(f'{metadata_dir}{subject_name}_metadata.csv', index=False)
+            print(f'Current metadata saved to {metadata_dir}{subject_name}_metadata.csv')
+            return None

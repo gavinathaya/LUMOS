@@ -160,7 +160,7 @@ class CalibrationFrames:
         self.metadata = metadata  #DataFrame to hold metadata
 
     #--- Load Frames ---
-    def load_bias(self, df, selfupdate = True):
+    def load_bias(self, df, ret_res = False) -> None | np.ndarray:
         """
         Load and combine bias frames into a master bias frame.
         Parameters
@@ -214,12 +214,14 @@ class CalibrationFrames:
             frames.append(bias_now)
             lumutils.progress_bar(row.Index, len(df))
         result = np.median(frames, axis=0)
+        
+        self.bias = result
 
-        if selfupdate:
-            self.bias = result
-        return result
+        ret = None
+        if ret_res: ret = result
+        return ret
 
-    def load_darks(self, df, inplace=True):
+    def load_darks(self, df, ret_res=False):
         """
         Load and combine dark frames grouped by exposure time.
 
@@ -288,11 +290,13 @@ class CalibrationFrames:
                 lumutils.progress_bar(i, len(group))
             result[exptime] = np.median(frames, axis=0)
 
-        if inplace:
-            self.darks = result
-        return result
+        self.darks = result
 
-    def load_flats(self, df, inplace=True):
+        ret = None
+        if ret_res: ret = result
+        return ret
+
+    def load_flats(self, df, ret_res=False):
         """
         Load and combine flat-field frames into master flats per filter.
         Parameters
@@ -365,9 +369,11 @@ class CalibrationFrames:
                 lumutils.progress_bar(i, len(group))
             result[flt] = np.median(frames, axis=0)
         
-        if inplace:
-            self.flats = result
-        return result
+        self.flats = result
+
+        ret = None
+        if ret_res: ret = result
+        return ret
 
     #--- Add frames ---
     def add_bias(self, files):
@@ -618,6 +624,9 @@ class CalibrationFrames:
                               subject_name: str = '', metadata_dir: str = './',
                               warn = True, *, sigma: float = 3.0,
                               box_size: int = 50, filter_size = (3,3)):
+        #Only process successfully calibrated files
+        success_meta = self.metadata.query('CAL_STATUS == "SUCCESS"')
+        
         #Suppress warnings for cleaner output
         if not warn:
             np.seterr(all='ignore')
@@ -628,7 +637,7 @@ class CalibrationFrames:
         os.makedirs(clean_dir, exist_ok=True)
 
         print('Removing Background...')
-        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+        for i, row in enumerate(success_meta.itertuples()):
             cal_data = fits.getdata(row.CAL_FILENAME)
             clean_data = self.remove_background(cal_data, sigma=sigma,
                                              box_size=box_size,
@@ -641,7 +650,7 @@ class CalibrationFrames:
                                   header = header)
             hdu.writeto(clean_filename, overwrite=True)
             self.metadata.loc[row.Index, ['CLN_FILENAME']] = [clean_filename]
-            lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+            lumutils.progress_bar(i, len(success_meta))
 
             if warn:
                 print(f"Calibrated {row.FILENAME} -> {clean_filename}")
@@ -655,9 +664,12 @@ class CalibrationFrames:
 
     # --- Plotting ---
     def plot_calibration(self, plot_dir: str = './cal_plots/', origin: str = 'lower'):
+        #Only process successfully calibrated files
+        success_meta = self.metadata.query('CAL_STATUS == "SUCCESS"')
+        
         os.makedirs(plot_dir, exist_ok=True)
         print(f"Calibration plots will be saved to '{plot_dir}'")
-        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+        for i, row in enumerate(success_meta.itertuples()):
             raw_data = fits.getdata(row.FILENAME)
             cal_data = fits.getdata(row.CAL_FILENAME)
             fig = lumvis.plot_comparison(raw_data, cal_data,
@@ -667,13 +679,16 @@ class CalibrationFrames:
                                          os.path.basename(row.FILENAME).replace('.fit', '_comparison.png'))
             fig.savefig(plot_filename)
             plt.close(fig)
-            lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+            lumutils.progress_bar(i, len(success_meta))
         return None
     
     def plot_background(self, plot_dir: str = './cal_plots/', origin: str = 'lower'):
+        #Only process successfully calibrated files
+        success_meta = self.metadata.query('CAL_STATUS == "SUCCESS"')
+        
         os.makedirs(plot_dir, exist_ok=True)
         print(f"Background plots will be saved to '{plot_dir}'")
-        for i, row in enumerate(self.metadata.query('CAL_STATUS == "SUCCESS"').itertuples()):
+        for i, row in enumerate(success_meta.itertuples()):
             cal_data = fits.getdata(row.CAL_FILENAME)
             cln_data = fits.getdata(row.CLN_FILENAME)
             fig = lumvis.plot_comparison(cal_data, cln_data,
@@ -683,7 +698,7 @@ class CalibrationFrames:
                                          os.path.basename(row.FILENAME).replace('.fit', '_clean.png'))
             fig.savefig(plot_filename)
             plt.close(fig)
-            lumutils.progress_bar(i, len(self.metadata.query('CAL_STATUS == "SUCCESS"')))
+            lumutils.progress_bar(i, len(success_meta))
         return None
 
     # --- Friendly representation ---

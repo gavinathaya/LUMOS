@@ -3,6 +3,7 @@ import pandas as pd
 from photutils.detection import DAOStarFinder
 from astropy.io import fits
 from astropy.table import QTable
+from astropy.visualization.wcsaxes import WCSAxes
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from lumos.visualization import plot_ccd
@@ -204,12 +205,12 @@ def plot_source(image, main_title = "Detected Sources",
     if wcs is None:
         raise ValueError("WCS must be provided for plotting in world coordinates.") 
     fig= plt.figure(figsize=(12, 6))
-    ax: list[Axes] = []
+    ax: list = []
     ax.append(fig.add_subplot(1,2,1))
     ax.append(fig.add_subplot(1,2,2, projection = wcs))
 
     plot_source_single(image, fig, ax[0],
-                       source=source, wcs = wcs,
+                       source=source,
                        title=left_title, clip=clip,
                        level=level, origin=origin)
     plot_source_single(image, fig, ax[1],
