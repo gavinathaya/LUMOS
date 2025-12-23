@@ -19,5 +19,4 @@ __pycache__/
 #Ignore Jupyter notebook checkpoints and unrelated files
 .ipynb_checkpoints/
 experiments.ipynb
-main.ipynb
 results/
