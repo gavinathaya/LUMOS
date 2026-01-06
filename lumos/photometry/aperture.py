@@ -13,7 +13,7 @@ def apply_phot_aperture(image, positions, n_fwhm: float= 3.0, fit_shape: int = 1
     result = aperture_photometry(image, aperture)
     return result
 
-def calibrate_mag(std_count, std_mag, list_count, ret_median = True) -> np.ndarray:
+def calibrate_mag(std_count, std_mag, list_count, ret_median = True) -> tuple[np.ndarray, np.ndarray]:
     #Ensure 1D inputs. Accept any shape that can be reshaped to 1D.
     std_count = np.asarray(std_count).reshape(-1)
     std_mag = np.asarray(std_mag).reshape(-1)
@@ -25,15 +25,18 @@ def calibrate_mag(std_count, std_mag, list_count, ret_median = True) -> np.ndarr
     list_count = list_count.reshape(1, -1) # shape (1, N_targets)
 
     zero_point = std_mag + 2.5 * np.log10(std_count)
-    mag = -2.5 * np.log10(list_count) + zero_point
-    if ret_median: mag = np.median(mag, axis=0)  #Median across standards
-    return mag
+    mag_inst = -2.5 * np.log10(list_count)
+    mag = mag_inst + zero_point
+    if ret_median:
+        mag = np.median(mag, axis=0)  #Median across standards
+        mag_inst = np.median(mag_inst, axis=0) #Median across standards
+    return mag, mag_inst
 
 if __name__ == "__main__":
     # Testing
     list_count = np.asarray([15000, 20000, 30000, 1000, 45000])
     std_count = (30000, 1000)
     std_mag = (6.0, 9.69)
-    mag = calibrate_mag(std_count, std_mag, list_count)
+    mag,mag_inst = calibrate_mag(std_count, std_mag, list_count)
     print("Calibrated Magnitudes:", mag)
     print("Shape of calibrated magnitudes:", mag.shape)
